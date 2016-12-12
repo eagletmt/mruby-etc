@@ -86,6 +86,19 @@ static mrb_value m_getgrgid(mrb_state *mrb, mrb_value self) {
   }
 }
 
+static mrb_value m_getgrnam(mrb_state *mrb, mrb_value self) {
+  char *name;
+  struct group *gr;
+
+  mrb_get_args(mrb, "z", &name);
+  gr = getgrnam(name);
+  if (gr == NULL) {
+    return mrb_nil_value();
+  } else {
+    return make_group_instance(mrb, gr);
+  }
+}
+
 void mrb_mruby_etc_gem_init(mrb_state *mrb) {
   struct RClass *etc = mrb_define_module(mrb, "Etc");
 
@@ -96,6 +109,8 @@ void mrb_mruby_etc_gem_init(mrb_state *mrb) {
 
   mrb_define_singleton_method(mrb, (struct RObject *)etc, "getgrgid",
                               m_getgrgid, MRB_ARGS_REQ(1));
+  mrb_define_singleton_method(mrb, (struct RObject *)etc, "getgrnam",
+                              m_getgrnam, MRB_ARGS_REQ(1));
 }
 
 void mrb_mruby_etc_gem_final(mrb_state *mrb) {
