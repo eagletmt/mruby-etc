@@ -39,6 +39,19 @@ static mrb_value m_getpwuid(mrb_state *mrb, mrb_value self) {
   }
 }
 
+static mrb_value m_getpwnam(mrb_state *mrb, mrb_value self) {
+  char *name;
+  struct passwd *pw;
+
+  mrb_get_args(mrb, "z", &name);
+  pw = getpwnam(name);
+  if (pw == NULL) {
+    return mrb_nil_value();
+  } else {
+    return make_passwd_instance(mrb, pw);
+  }
+}
+
 static mrb_value make_group_instance(mrb_state *mrb, const struct group *gr) {
   mrb_value v, mem;
   int i;
@@ -78,6 +91,8 @@ void mrb_mruby_etc_gem_init(mrb_state *mrb) {
 
   mrb_define_singleton_method(mrb, (struct RObject *)etc, "getpwuid",
                               m_getpwuid, MRB_ARGS_REQ(1));
+  mrb_define_singleton_method(mrb, (struct RObject *)etc, "getpwnam",
+                              m_getpwnam, MRB_ARGS_REQ(1));
 
   mrb_define_singleton_method(mrb, (struct RObject *)etc, "getgrgid",
                               m_getgrgid, MRB_ARGS_REQ(1));
