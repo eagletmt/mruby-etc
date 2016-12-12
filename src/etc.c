@@ -1,8 +1,10 @@
 #include <grp.h>
 #include <mruby.h>
 #include <mruby/array.h>
+#include <mruby/hash.h>
 #include <mruby/variable.h>
 #include <pwd.h>
+#include <sys/utsname.h>
 
 static mrb_value make_passwd_instance(mrb_state *mrb, const struct passwd *pw) {
   mrb_value v;
@@ -99,6 +101,27 @@ static mrb_value m_getgrnam(mrb_state *mrb, mrb_value self) {
   }
 }
 
+static mrb_value m_uname(mrb_state *mrb, mrb_value self) {
+  struct utsname name;
+
+  if (uname(&name) == -1) {
+    return mrb_nil_value();
+  } else {
+    mrb_value result = mrb_hash_new(mrb);
+    mrb_hash_set(mrb, result, mrb_symbol_value(mrb_intern_lit(mrb, "sysname")),
+                 mrb_str_new_cstr(mrb, name.sysname));
+    mrb_hash_set(mrb, result, mrb_symbol_value(mrb_intern_lit(mrb, "nodename")),
+                 mrb_str_new_cstr(mrb, name.nodename));
+    mrb_hash_set(mrb, result, mrb_symbol_value(mrb_intern_lit(mrb, "release")),
+                 mrb_str_new_cstr(mrb, name.release));
+    mrb_hash_set(mrb, result, mrb_symbol_value(mrb_intern_lit(mrb, "version")),
+                 mrb_str_new_cstr(mrb, name.version));
+    mrb_hash_set(mrb, result, mrb_symbol_value(mrb_intern_lit(mrb, "machine")),
+                 mrb_str_new_cstr(mrb, name.machine));
+    return result;
+  }
+}
+
 void mrb_mruby_etc_gem_init(mrb_state *mrb) {
   struct RClass *etc = mrb_define_module(mrb, "Etc");
 
@@ -111,6 +134,9 @@ void mrb_mruby_etc_gem_init(mrb_state *mrb) {
                               m_getgrgid, MRB_ARGS_REQ(1));
   mrb_define_singleton_method(mrb, (struct RObject *)etc, "getgrnam",
                               m_getgrnam, MRB_ARGS_REQ(1));
+
+  mrb_define_singleton_method(mrb, (struct RObject *)etc, "uname", m_uname,
+                              MRB_ARGS_NONE());
 }
 
 void mrb_mruby_etc_gem_final(mrb_state *mrb) {
