@@ -5,6 +5,7 @@
 #include <mruby/variable.h>
 #include <pwd.h>
 #include <sys/utsname.h>
+#include <unistd.h>
 
 static mrb_value make_passwd_instance(mrb_state *mrb, const struct passwd *pw) {
   mrb_value v;
@@ -32,7 +33,11 @@ static mrb_value m_getpwuid(mrb_state *mrb, mrb_value self) {
   mrb_int uid;
   struct passwd *pw;
 
-  mrb_get_args(mrb, "i", &uid);
+  if (mrb_get_argc(mrb) == 0) {
+    uid = getuid();
+  } else {
+    mrb_get_args(mrb, "i", &uid);
+  }
   pw = getpwuid(uid);
   if (pw == NULL) {
     return mrb_nil_value();
@@ -79,7 +84,11 @@ static mrb_value m_getgrgid(mrb_state *mrb, mrb_value self) {
   mrb_int gid;
   struct group *gr;
 
-  mrb_get_args(mrb, "i", &gid);
+  if (mrb_get_argc(mrb) == 0) {
+    gid = getgid();
+  } else {
+    mrb_get_args(mrb, "i", &gid);
+  }
   gr = getgrgid(gid);
   if (gr == NULL) {
     return mrb_nil_value();
@@ -126,12 +135,12 @@ void mrb_mruby_etc_gem_init(mrb_state *mrb) {
   struct RClass *etc = mrb_define_module(mrb, "Etc");
 
   mrb_define_singleton_method(mrb, (struct RObject *)etc, "getpwuid",
-                              m_getpwuid, MRB_ARGS_REQ(1));
+                              m_getpwuid, MRB_ARGS_OPT(1));
   mrb_define_singleton_method(mrb, (struct RObject *)etc, "getpwnam",
                               m_getpwnam, MRB_ARGS_REQ(1));
 
   mrb_define_singleton_method(mrb, (struct RObject *)etc, "getgrgid",
-                              m_getgrgid, MRB_ARGS_REQ(1));
+                              m_getgrgid, MRB_ARGS_OPT(1));
   mrb_define_singleton_method(mrb, (struct RObject *)etc, "getgrnam",
                               m_getgrnam, MRB_ARGS_REQ(1));
 
